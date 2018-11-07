@@ -1,12 +1,6 @@
 package indi.hb.excelutils;
 
-import java.awt.Desktop;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URI;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 
@@ -17,7 +11,6 @@ import jxl.Sheet;
 import jxl.Workbook;
 import jxl.read.biff.BiffException;
 import lombok.AllArgsConstructor;
-import lombok.Cleanup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
@@ -37,84 +30,26 @@ public class Excel2Table {
 	 * 默认列宽
 	 */
 	private final int DEFAULT_COLS = 1;
-	public static void main(String[] args) {
-		String filePath = "C:\\Users\\wangh\\Desktop\\test.xls";
-		new Excel2Table(filePath);
-	}
 	
-	public Excel2Table(String filePath) {
-		String code = toHtml(filePath);
-		if (code == null && code.isEmpty()) {
-			log.log(Level.ERROR, new Throwable("解析Excel失败！"));
-		}
-		//控制台输出
-		System.out.println(code);
-		//生成html文件
-		File html = new File("test.html");
-		if (!html.exists()) {
-			try {
-				html.createNewFile();
-			} catch (IOException e) {
-				log.log(Level.ERROR, new Throwable("创建测试页失败，请自行复制控制台html代码！"));
-			}
-		}
-		//写入html代码
-		try {
-			@Cleanup FileOutputStream fos = new FileOutputStream(html);
-			fos.write(code.getBytes("UTF-8"));
-		} catch (FileNotFoundException e) {
-			log.log(Level.ERROR, new Throwable("测试页意外丢失，请自行复制控制台html代码！"));
-		} catch (UnsupportedEncodingException e) {
-			log.log(Level.DEBUG, new Throwable("不支持的编码格式"));
-		} catch (IOException e) {
-			log.log(Level.ERROR, new Throwable("测试页写入失败，请自行复制控制台html代码！"));
-		}
-		//调用系统默认浏览器预览生成的HTML
-		if (Desktop.isDesktopSupported()) {
-			URI uri = URI.create("test.html");
-			Desktop desktop = Desktop.getDesktop();
-			if (desktop.isSupported(Desktop.Action.BROWSE)) {
-				try {
-					desktop.browse(uri);
-				} catch (IOException e) {
-					log.log(Level.WARN, new Throwable("获取不到系统默认浏览器"));
-				}
-			}
-		}
-	}
 	/**
-	 * 生成html页面
-	 * @param filePath
+	 * Excel转Table代码
+	 * 适用于本地环境
+	 * @param excelPath 文件路径
 	 * @return
 	 */
-	public String toHtml(@NonNull String filePath) {
-		StringBuilder html = new StringBuilder();
-		SheetBean sheet = analyze(filePath);
-		String table = toTable(sheet);
-		if (table != null && !table.isEmpty()) {
-			html.append("<!doctype html>\n" + 
-					"<html>\n" + 
-					"<head>\n" + 
-					"<meta charset=\"utf-8\" />\n" + 
-					"<style type=\"text/css\">\n" + 
-					"table {\n" + 
-					"    border-collapse: collapse;\n" + 
-					"    border: none;\n" + 
-					"    margin: 0 auto;\n" + 
-					"}\n" + 
-					"td {\n" + 
-					"    border: solid #000 1px;\n" + 
-					"}\n" + 
-					"</style>\n" + 
-					"</head>\n" + 
-					"<body>\n");
-			html.append(table);
-			html.append("</body>\n</html>");
-		}
-		return html.toString();
+	public String toTable(@NonNull String excelPath) {
+		return toTable(readExcel(excelPath));
 	}
 	/**
-	 * 生成Table
+	 * Excel转Table代码
+	 * @param excel 文件
+	 * @return
+	 */
+	public String toTable(@NonNull java.io.File excel) {
+		return toTable(analyze(excel));
+	}
+	/**
+	 * Excel转Table代码
 	 * @param sheetBean
 	 * @return
 	 */
@@ -144,14 +79,6 @@ public class Excel2Table {
 		}
 		table.append("</table>\n");
 		return table.toString();
-	}
-	/**
-	 * 解析表格
-	 * @param filePath Excel文件路径
-	 * @return
-	 */
-	public SheetBean analyze(@NonNull String filePath) {
-		return analyze(readExcel(filePath));
 	}
 	/**
 	 * 解析表格
