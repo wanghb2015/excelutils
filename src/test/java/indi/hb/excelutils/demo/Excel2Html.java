@@ -110,28 +110,53 @@ public class Excel2Html {
 					"	var tab = document.getElementsByTagName(\"table\")[0];\n" + 
 					"	//行,单元格\n" + 
 					"	var row, cell;\n" + 
-					"	//总列数,总行数,单元格行高\n" + 
-					"	var cnt_col = 0, cnt_row = tab.rows.length, rowspan;\n" + 
-					"	for (var j, i = 0; i < cnt_row; i++) {\n" + 
-					"		row = tab.rows[i];\n" + 
-					"		for (j = 0; j < row.cells.length; j++) {\n" + 
-					"			cell = row.cells[j];\n" + 
-					"			rowspan = cell.hasAttribute(\"rowspan\") ? cell.getAttribute(\"rowspan\") : 1;\n" + 
-					"			//如果单元格在表格最底边,计入列数\n" + 
-					"			if (rowspan == cnt_row - i) {\n" + 
-					"				cnt_col += (cell.hasAttribute(\"colspan\") ? cell.getAttribute(\"colspan\") : 1);\n" + 
+					"	//列数,总行数,单元格行高\n" + 
+					"	var cnt_col, cnt_row = tab.rows.length;\n" + 
+					"    //标签名，二维数组\n" + 
+					"    var newTagNames = new Array(new Array());\n" + 
+					"    //遍历第一行，确定二维数组x轴，之后填充空格\n" + 
+					"    for (var j = 0; j < tab.rows.length; j++) {\n" + 
+					"    	row = tab.rows[j];\n" + 
+					"    	cnt_col = 0;\n" + 
+					"		for (var i = 0; i < row.cells.length; i++) {\n" + 
+					"			cell = row.cells[i];\n" + 
+					"			for (var m = 0; m < cell.rowSpan; m++) {\n" + 
+					"				for (var n = 0; n < cell.colSpan; n++) {\n" + 
+					"					fillArray(newTagNames, n + cnt_col, m + j, cell.innerHTML);\n" + 
+					"				}\n" + 
 					"			}\n" + 
+					"	        cnt_col += cell.colSpan;\n" + 
 					"		}\n" + 
-					"	}\n" + 
+					"    }\n" + 
 					"	//插入新列\n" + 
 					"	var newCell, newRow = tab.insertRow(cnt_row);\n" + 
-					"	for (var k = 0; k < cnt_col; k++) {\n" + 
+					"	for (var k = 0; k < newTagNames[newTagNames.length - 1].length; k++) {\n" + 
 					"		newCell = newRow.insertCell(k);\n" + 
-					"		newCell.innerHTML = createSelect(k);\n" + 
+					"		newCell.innerHTML = createSelect(k + 1, newTagNames[newTagNames.length - 1][k]);\n" + 
 					"	}\n" + 
 					"}\n" + 
-					"function createSelect(i) {\n" + 
-					"	var selectTag = \"<select id=\\\"column\" + i + \"\\\">\"\n" + 
+					"/**\n" + 
+					" * 数据填充\n" + 
+					" */\n" + 
+					"function fillArray(a, x, y, c) {\n" + 
+					"	if (typeof a != \"object\" && !a instanceof Array) {\n" + 
+					"		//类型不正确\n" + 
+					"		return;\n" + 
+					"	}\n" + 
+					"	if (y >= a.length) {\n" + 
+					"		a.push(new Array());\n" + 
+					"		fillArray(a, x, y, c);\n" + 
+					"	} else if (x >= a[y].length) {\n" + 
+					"		a[y].push(\"\");\n" + 
+					"        fillArray(a, x, y, c);\n" + 
+					"	} else if (a[y][x] == \"\") {\n" + 
+					"		a[y][x] = c;\n" + 
+					"	} else if (x < a[y].length) {\n" + 
+					"		fillArray(a, x + 1, y, c);\n" + 
+					"	}\n" + 
+					"}\n" + 
+					"function createSelect(i, n) {\n" + 
+					"	var selectTag = \"<select id=\\\"value\" + i + \"\\\" name=\\\"\" + n + \"\\\">\"\n" + 
 					"    + \"<option value=\\\"1\\\">文本</option>\"\n" + 
 					"    + \"<option value=\\\"2\\\">日期</option>\"\n" + 
 					"    + \"<option value=\\\"3\\\">数字</option>\"\n" + 
