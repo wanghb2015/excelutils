@@ -21,7 +21,7 @@ public class Excel2Html {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		String filePath = "C:\\Users\\wangh\\Desktop\\test.xls";
+		String filePath = "test.xls";
 		if (args.length > 0 && args[0] != null && !args[0].isEmpty()) {
 			filePath = args[0];
 		}
