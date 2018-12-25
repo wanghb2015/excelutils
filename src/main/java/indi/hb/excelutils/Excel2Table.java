@@ -57,21 +57,29 @@ public class Excel2Table {
 		StringBuilder table = new StringBuilder();
 		table.append("<table>\n");
 		TreeSet<CellBean> cells = sheetBean.cells;
-		//每行中单元格的序号
+		// 每行中单元格的序号
 		int cellNum = 0;
-		//遍历单元格
+		// 上一个Cell的行号
+		int lastX = 0;
+		// 遍历单元格
 		for (CellBean cellBean : cells) {
-			//每行开始使用<tr>
+			// 矫正行判断
+			if (cellBean.getY() > lastX) {
+				lastX = cellBean.getY();
+				cellNum = 0;
+			}
+			// 每行开始使用<tr>
 			if (cellNum == 0) {
 				table.append("<tr>\n");
+				cellNum = cellBean.getX();
 			}
-			//序号增加（单元格所占列数）
+			// 序号增加（单元格所占列数）
 			cellNum += cellBean.getCols();
 			table.append("<td").append((cellBean.getCols() > 1) ? " colspan=\"" + cellBean.getCols() + "\"" : "")
 				.append((cellBean.getRows() > 1) ? " rowspan=\"" + cellBean.getRows() + "\"" : "").append(">");
 			table.append(cellBean.getContent());
 			table.append("</td>\n");
-			//每行结束，归零
+			// 每行结束，归零
 			if (cellNum == sheetBean.getCols()) {
 				table.append("</tr>\n");
 				cellNum = 0;
@@ -99,9 +107,9 @@ public class Excel2Table {
 			log.log(Level.ERROR, new Throwable("文件读取失败！"));
 			return null;
 		}
-		//默认读取第一张工作表
+		// 默认读取第一张工作表
 		Sheet sheet = workbook.getSheet(0);
-		//合并的单元格
+		// 合并的单元格
 		Range[] mergeCells = sheet.getMergedCells();
 		sheetBean.setRows(sheet.getRows());
 		sheetBean.setCols(sheet.getColumns());
@@ -111,7 +119,7 @@ public class Excel2Table {
 		for (int j, i = 0; i < sheet.getRows(); i++) {
 			for (j = 0; j < sheet.getColumns(); j++) {
 				content = sheet.getCell(j, i).getContents();
-				//空单元格暂不处理
+				// 空单元格暂不处理
 				if (content != null && !content.isEmpty()) {
 					cellBean = new CellBean(content, j, i, DEFAULT_ROWS, DEFAULT_COLS);
 					arrays[j][i] = cellBean;
@@ -120,7 +128,7 @@ public class Excel2Table {
 			}
 		}
 		CellBean mergeCellBean = null;
-		//找出合并单元格,改写行高和列宽
+		// 找出合并单元格,改写行高和列宽
 		for (Range mergeCell : mergeCells) {
 			mergeCellBean = arrays[mergeCell.getTopLeft().getColumn()][mergeCell.getTopLeft().getRow()];
 			mergeCellBean.setCols(mergeCell.getBottomRight().getColumn() - mergeCell.getTopLeft().getColumn() + DEFAULT_COLS);
@@ -179,19 +187,19 @@ public class Excel2Table {
 		public int compare(CellBean o1, CellBean o2) {
 			int i = 0;
 			if (o1.y > o2.y) {
-				//1.行号越大越靠后
+				// 1.行号越大越靠后
 				i = -1;
 			} else if (o1.y < o2.y) {
-				//2.行号越小越靠前
+				// 2.行号越小越靠前
 				i = 1;
 			} else if (o1.x > o2.x) {
-				//3.行号相同，比列号，列号越大越靠后
+				// 3.行号相同，比列号，列号越大越靠后
 				i = -1;
 			} else if (o1.x < o2.x) {
-				//4.列号越小越靠前
+				// 4.列号越小越靠前
 				i = 1;
 			}
-			//5.行号、列号均相同则为相同单元格
+			// 5.行号、列号均相同则为相同单元格
 			return i;
 		}
 		/**
