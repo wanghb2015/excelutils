@@ -57,33 +57,19 @@ public class Excel2Table {
 		StringBuilder table = new StringBuilder();
 		table.append("<table>\n");
 		TreeSet<CellBean> cells = sheetBean.cells;
-		// 每行中单元格的序号
-		int cellNum = 0;
-		// 上一个Cell的行号
-		int lastX = 0;
+		// 上一个Cell的行号，初始用-1
+		int lastX = -1;
 		// 遍历单元格
 		for (CellBean cellBean : cells) {
-			// 矫正行判断
+			// 只通过单元格行号判断是否另起一行，利用html特性只写<tr>开始标签，不写结束标签，减少行结束判断提高性能
 			if (cellBean.getY() > lastX) {
 				lastX = cellBean.getY();
-				cellNum = 0;
-			}
-			// 每行开始使用<tr>
-			if (cellNum == 0) {
 				table.append("<tr>\n");
-				cellNum = cellBean.getX();
 			}
-			// 序号增加（单元格所占列数）
-			cellNum += cellBean.getCols();
 			table.append("<td").append((cellBean.getCols() > 1) ? " colspan=\"" + cellBean.getCols() + "\"" : "")
 				.append((cellBean.getRows() > 1) ? " rowspan=\"" + cellBean.getRows() + "\"" : "").append(">");
 			table.append(cellBean.getContent());
 			table.append("</td>\n");
-			// 每行结束，归零
-			if (cellNum == sheetBean.getCols()) {
-				table.append("</tr>\n");
-				cellNum = 0;
-			}
 		}
 		table.append("</table>\n");
 		return table.toString();
